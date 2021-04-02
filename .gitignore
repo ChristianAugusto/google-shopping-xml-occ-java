@@ -1,0 +1,4 @@
+software/*.class
+/target/
+executions/store.sh
+filesConfig/store.json

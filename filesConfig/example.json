@@ -1,0 +1,7 @@
+{
+    "occAdminHost": "OCC host, example: aaaaa.bbbb.ccc.com",
+    "occAppKey": "OCC application key",
+    "occInventoryLocation": "default",
+    "occListProductsLimit": 10,
+    "occListProductsFields": "repositoryId,displayName,route,active,excludeFromSitemap,childSKUs"
+}
