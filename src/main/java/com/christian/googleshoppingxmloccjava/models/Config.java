@@ -6,6 +6,11 @@ public class Config {
     private String occInventoryLocation;
     private String occListProductsFields;
     private Integer occListProductsLimit;
+    private String occInventoryFields;
+    private String storeUrl;
+    private String xmlName;
+    private Boolean showInactives;
+    private Boolean showUnavailables;
 
 
     public String getOccAdminHost() {
@@ -37,5 +42,35 @@ public class Config {
     }
     public void setOccListProductsLimit(Integer occListProductsLimit) {
         this.occListProductsLimit = occListProductsLimit;
+    }
+    public String getOccInventoryFields() {
+        return occInventoryFields;
+    }
+    public void setOccInventoryFields(String occInventoryFields) {
+        this.occInventoryFields = occInventoryFields;
+    }
+    public String getStoreUrl() {
+        return storeUrl;
+    }
+    public void setStoreUrl(String storeUrl) {
+        this.storeUrl = storeUrl;
+    }
+    public String getXmlName() {
+        return xmlName;
+    }
+    public void setXmlName(String xmlName) {
+        this.xmlName = xmlName;
+    }
+    public Boolean getShowInactives() {
+        return showInactives;
+    }
+    public void setShowInactives(Boolean showInactives) {
+        this.showInactives = showInactives;
+    }
+    public Boolean getShowUnavailables() {
+        return showUnavailables;
+    }
+    public void setShowUnavailables(Boolean showUnavailables) {
+        this.showUnavailables = showUnavailables;
     }
 }

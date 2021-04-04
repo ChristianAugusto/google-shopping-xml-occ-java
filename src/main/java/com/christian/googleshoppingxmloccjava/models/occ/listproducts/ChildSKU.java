@@ -3,8 +3,8 @@ package com.christian.googleshoppingxmloccjava.models.occ.listproducts;
 public class ChildSKU {
     private String repositoryId;
     private String displayName;
-    private Float listPrice;
-    private Float salePrice;
+    private Double listPrice;
+    private Double salePrice;
     private Boolean active;
 
 
@@ -20,16 +20,16 @@ public class ChildSKU {
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
-    public Float getListPrice() {
+    public Double getListPrice() {
         return listPrice;
     }
-    public void setListPrice(Float listPrice) {
+    public void setListPrice(Double listPrice) {
         this.listPrice = listPrice;
     }
-    public Float getSalePrice() {
+    public Double getSalePrice() {
         return salePrice;
     }
-    public void setSalePrice(Float salePrice) {
+    public void setSalePrice(Double salePrice) {
         this.salePrice = salePrice;
     }
     public Boolean getActive() {

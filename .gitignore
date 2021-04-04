@@ -1,4 +1,4 @@
-software/*.class
-/target/
+build/*.xml
+target/
 executions/store.sh
 filesConfig/store.json

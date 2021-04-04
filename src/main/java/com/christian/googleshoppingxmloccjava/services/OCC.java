@@ -39,4 +39,64 @@ public class OCC {
 
         throw new Exception("Attempts limit exceeded in OCC.listProducts");
     }
+
+    public static ListProductsPayload getInventory(Config config, String inventoryId, OCCToken occToken) throws Exception {
+        final String url = "https://{occAdminHost}/ccadmin/v1/inventories/{inventoryId}";
+
+        for (int attempts = 0; attempts < 5; attempts++) {
+            HttpResponse<String> httpResponse = null;
+
+            if (config.getOccInventoryLocation() == null) {
+                httpResponse = Unirest.get(url)
+                    .routeParam("occAdminHost", config.getOccAdminHost())
+                    .routeParam("inventoryId", inventoryId)
+                    .queryString("fields", config.getOccListProductsFields())
+                    .header("Authorization", "Bearer ".concat(occToken.getToken(config)))
+                    .asString();
+
+
+                if (httpResponse.getStatus() / 100 != 2) {
+                    Logger.error(String.format(
+                        "Error in OCC.listProducts: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
+                    ));
+                }
+                else {
+                    Gson gson = new Gson();
+
+                    ListProductsPayload listProductsPayload = gson.fromJson(
+                        httpResponse.getBody(), ListProductsPayload.class
+                    );
+
+                    return listProductsPayload;
+                }
+            }
+            else {
+                httpResponse = Unirest.get(url)
+                    .routeParam("occAdminHost", config.getOccAdminHost())
+                    .routeParam("inventoryId", inventoryId)
+                    .queryString("locationIds", config.getOccInventoryLocation())
+                    .queryString("fields", config.getOccListProductsFields())
+                    .header("Authorization", "Bearer ".concat(occToken.getToken(config)))
+                    .asString();
+
+
+                if (httpResponse.getStatus() / 100 != 2) {
+                    Logger.error(String.format(
+                        "Error in OCC.listProducts: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
+                    ));
+                }
+                else {
+                    Gson gson = new Gson();
+
+                    ListProductsPayload listProductsPayload = gson.fromJson(
+                        httpResponse.getBody(), ListProductsPayload.class
+                    );
+
+                    return listProductsPayload;
+                }
+            }
+        }
+
+        throw new Exception("Attempts limit exceeded in OCC.listProducts");
+    }
 }

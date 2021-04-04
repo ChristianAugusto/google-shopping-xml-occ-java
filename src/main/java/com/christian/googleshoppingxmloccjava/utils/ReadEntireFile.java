@@ -24,7 +24,7 @@ public class ReadEntireFile {
             return sb.toString();
         } 
         catch (Exception e) {
-            Logger.info(e.getMessage());
+            Logger.error(e.getMessage());
             if (br != null) {
                 try {
                     br.close();
