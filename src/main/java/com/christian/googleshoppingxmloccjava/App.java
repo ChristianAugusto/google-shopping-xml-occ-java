@@ -1,7 +1,8 @@
 package com.christian.googleshoppingxmloccjava;
 
-import com.christian.googleshoppingxmloccjava.models.Config;
+import com.christian.googleshoppingxmloccjava.models.config.Config;
 import com.christian.googleshoppingxmloccjava.models.files.XML;
+import com.christian.googleshoppingxmloccjava.models.occ.inventorydetails.Inventory;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ChildSKU;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ListProductsPayload;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ProductItem;
@@ -16,6 +17,7 @@ public class App {
 	public static void main(String[] args) {
 		try {
             Logger.info("Starting Google shopping XML OCC Java");
+            long initTime = System.currentTimeMillis();
 
 
 
@@ -34,7 +36,11 @@ public class App {
             }
 
             OCCToken occToken = new OCCToken();
-            int offset = 0;
+            long offset = 0;
+            long totalProducts = 0;
+            long totalSkus = 0;
+            long writtenProducts = 0;
+            long writtenSkus = 0;
             XML xml = new XML("build", config.getXmlName());
 
 
@@ -42,39 +48,54 @@ public class App {
             GoogleShoppingXML.start(xml);
 
             while (true) {
-                ListProductsPayload listProductsPayload = OCC.listProducts(config, offset, occToken);
+                ListProductsPayload listProductsPayload = OCC.listProducts(
+                    config.getOccConfig().getAdminHost(), config.getOccConfig().getListProductsFields(),
+                    config.getOccConfig().getListProductsLimit(), config.getShowInactives(), offset,
+                    occToken, config.getOccConfig().getAppKey()
+                );
 
                 if (listProductsPayload.getItems() == null || listProductsPayload.getItems().size() == 0) {
                     break;
                 }
 
+                totalProducts += listProductsPayload.getItems().size();
 
                 for (ProductItem productItem : listProductsPayload.getItems()) {
                     try {
-                        if (
-                            productItem.getActive() ||
-                            (!productItem.getActive() && config.getShowInactives())
-                        ) {
-                            ArrayList<ChildSKU> childSKUs = productItem.getChildSKUs();
+                        ArrayList<ChildSKU> childSKUs = productItem.getChildSKUs();
 
-                            if (childSKUs != null && childSKUs.size() > 0) {
-                                for (ChildSKU childSKU : childSKUs) {
-                                    try {
-                                        if (
-                                            childSKU.getActive() ||
-                                            (!childSKU.getActive() && config.getShowInactives())
-                                        ) {
-                                            // TODO: Validar estoque
-                                            GoogleShoppingXML.writeItem(config, xml, productItem, childSKU, true);
-                                        }
-                                    }
-                                    catch (Exception e) {
-                                        e.printStackTrace();
-                                        throw new Exception(String.format(
-                                            "Error in process sku %s", childSKU.getRepositoryId()
-                                        ));
+                        if (childSKUs != null && childSKUs.size() > 0) {
+                            boolean writtenProduct = false;
+
+                            for (ChildSKU childSKU : childSKUs) {
+                                try {
+                                    totalSkus++;
+
+                                    Inventory inventory = OCC.inventoryDetails(
+                                        config.getOccConfig().getAdminHost(), childSKU.getRepositoryId(),
+                                        config.getOccConfig().getInventoryLocation(),
+                                        occToken, config.getOccConfig().getAppKey()
+                                    );
+
+                                    if (
+                                        inventory.getStockLevel() > 0 ||
+                                        (inventory.getStockLevel() == 0 && config.getShowUnavailables())
+                                    ) {
+                                        GoogleShoppingXML.writeItem(xml, config.getStoreUrl(), productItem, childSKU, true);
+                                        writtenProduct = true;
+                                        writtenSkus++;
                                     }
                                 }
+                                catch (Exception e) {
+                                    e.printStackTrace();
+                                    throw new Exception(String.format(
+                                        "Error in process sku %s", childSKU.getRepositoryId()
+                                    ));
+                                }
+                            }
+
+                            if (writtenProduct) {
+                                writtenProducts++;
                             }
                         }
                     }
@@ -86,8 +107,16 @@ public class App {
                     }
                 }
 
-                offset += config.getOccListProductsLimit();
-                break; // tmp
+                Logger.info(String.format("Finishing offset %d", offset));
+                Logger.info(String.format("totalProducts = %d", totalProducts));
+                Logger.info(String.format("totalSkus = %d", totalSkus));
+                Logger.info(String.format("writtenProducts = %d", writtenProducts));
+                Logger.info(String.format("writtenSkus = %d", writtenSkus));
+                Logger.info("------------------------------------------------------------------------");
+
+                offset += config.getOccConfig().getListProductsLimit();
+
+                System.gc();
             }
 
             GoogleShoppingXML.finish(xml);
@@ -98,7 +127,10 @@ public class App {
 
 
 
-            // TODO: Tempo de execução
+            long finishTime = System.currentTimeMillis();
+            long executionTime = (finishTime - initTime) / 1000;
+
+            Logger.info(String.format("Execution time %d seconds", executionTime));
             Logger.info("Finishing Google shopping XML OCC Java");
         }
         catch (Exception e) {

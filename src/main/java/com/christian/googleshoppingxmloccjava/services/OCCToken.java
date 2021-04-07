@@ -2,7 +2,6 @@ package com.christian.googleshoppingxmloccjava.services;
 
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
-import com.christian.googleshoppingxmloccjava.models.Config;
 import com.christian.googleshoppingxmloccjava.models.occ.login.LoginPayload;
 import com.google.gson.Gson;
 import com.christian.googleshoppingxmloccjava.utils.Logger;
@@ -19,29 +18,29 @@ public class OCCToken {
         this.expires = null;
     }
 
-    public String getToken(Config config) throws Exception {
+    public String getToken(String adminHost, String appKey) throws Exception {
         if (this.token == null) {
-            this.renewToken(config);
+            this.renewToken(adminHost, appKey);
         }
         else {
             Long secondsElapsed = (System.currentTimeMillis() - this.time) / 1000;
 
             if (secondsElapsed > this.expires) {
-                this.renewToken(config);
+                this.renewToken(adminHost, appKey);
             }
         }
 
         return this.token;
     }
 
-    private void renewToken(Config config) throws Exception {
+    private void renewToken(String adminHost, String appKey) throws Exception {
         final String url = "https://{occAdminHost}/ccadmin/v1/login";
 
         for (int attempts = 0; attempts < 5; attempts++) {
             HttpResponse<String> httpResponse = Unirest.post(url)
-                .routeParam("occAdminHost", config.getOccAdminHost())
+                .routeParam("occAdminHost", adminHost)
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Authorization", "Bearer ".concat(config.getOccAppKey()))
+                .header("Authorization", "Bearer ".concat(appKey))
                 .body("grant_type=client_credentials")
                 .asString();
 

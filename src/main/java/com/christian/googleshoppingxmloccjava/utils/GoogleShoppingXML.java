@@ -2,8 +2,6 @@ package com.christian.googleshoppingxmloccjava.utils;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.christian.googleshoppingxmloccjava.utils.Price;
-import com.christian.googleshoppingxmloccjava.models.Config;
 import com.christian.googleshoppingxmloccjava.models.files.XML;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ChildSKU;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ProductItem;
@@ -22,7 +20,7 @@ public class GoogleShoppingXML {
         xml.writeOpeningElement("channel", null);
     }
 
-    public static void writeItem(Config config, XML xml, ProductItem productItem, ChildSKU childSKU, Boolean available) throws Exception {
+    public static void writeItem(XML xml, String storeUrl, ProductItem productItem, ChildSKU childSKU, Boolean available) throws Exception {
         xml.writeOpeningElement("item", null);
         xml.writeElementWithContent("g:item_group_id", null, productItem.getRepositoryId());
         xml.writeElementWithContent("g:id", null, childSKU.getRepositoryId());
@@ -30,13 +28,16 @@ public class GoogleShoppingXML {
         xml.writeElementWithContent(
             "g:description", null, productItem.getDescription() == null ? "" : productItem.getDescription()
         );
-        xml.writeElementWithContent("g:product_type", null, productItem.getParentCategory().getRepositoryId());
+        xml.writeElementWithContent(
+            "g:product_type", null,
+            productItem.getParentCategory() == null ? "" : productItem.getParentCategory().getRepositoryId()
+        );
         xml.writeElementWithContent("g:brand", null, productItem.getBrand());
         xml.writeElementWithContent("g:link", null, String.format(
-            "%s%s", config.getStoreUrl(), productItem.getRoute()
+            "%s%s", storeUrl, productItem.getRoute()
         ));
         xml.writeElementWithContent("g:image_link", null, String.format(
-            "%s%s", config.getStoreUrl(), productItem.getPrimaryLargeImageURL()
+            "%s%s", storeUrl, productItem.getPrimaryLargeImageURL()
         ));
         xml.writeElementWithContent("g:price", null, Price.realBRL(childSKU.getListPrice()));
         xml.writeElementWithContent("g:sale_price", null, Price.realBRL(childSKU.getSalePrice()));

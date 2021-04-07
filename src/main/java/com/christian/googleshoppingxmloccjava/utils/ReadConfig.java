@@ -1,6 +1,6 @@
 package com.christian.googleshoppingxmloccjava.utils;
 
-import com.christian.googleshoppingxmloccjava.models.Config;
+import com.christian.googleshoppingxmloccjava.models.config.Config;
 import com.google.gson.Gson;
 
 public class ReadConfig {

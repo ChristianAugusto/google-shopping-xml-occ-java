@@ -1,12 +1,13 @@
 {
-    "occAdminHost": "OCC host, example: aaaaa.bbbb.ccc.com",
-    "occAppKey": "OCC application key",
-    "occInventoryLocation": null,
-    "occListProductsLimit": 10,
-    "occListProductsFields": "repositoryId,description,parentCategory,brand,route,excludeFromSitemap,active,primaryLargeImageURL,childSKUs",
-    "occInventoryFields": "stockLevel,availabilityStatusMsg",
+    "occConfig": {
+        "adminHost": "Admin host, example: aaaaa.bbbb.ccc.com",
+        "appKey": "Application key",
+        "inventoryLocation": null,
+        "listProductsLimit": 50,
+        "listProductsFields": "repositoryId,description,parentCategory,brand,route,excludeFromSitemap,active,primaryLargeImageURL,childSKUs.repositoryId,childSKUs.displayName,childSKUs.listPrice,childSKUs.salePrice,childSKUs.active"
+    },
     "storeUrl": "https://www.store.com",
-    "xmlName": "store.xml",
+    "xmlName": "example.xml",
     "showInactives": false,
     "showUnavailables": false
-}
+} 

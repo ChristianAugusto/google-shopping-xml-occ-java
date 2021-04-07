@@ -2,24 +2,39 @@ package com.christian.googleshoppingxmloccjava.services;
 
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
-import com.christian.googleshoppingxmloccjava.models.Config;
+import com.mashape.unirest.request.GetRequest;
+import com.mashape.unirest.request.HttpRequest;
 import com.google.gson.Gson;
 import com.christian.googleshoppingxmloccjava.models.occ.listproducts.ListProductsPayload;
+import com.christian.googleshoppingxmloccjava.models.occ.inventorydetails.Inventory;
+import com.christian.googleshoppingxmloccjava.models.occ.inventorydetails.InventoryDetailsDefaultPayload;
+import com.christian.googleshoppingxmloccjava.models.occ.inventorydetails.InventoryDetailsLocationsPayload;
 import com.christian.googleshoppingxmloccjava.utils.Logger;
 
 public class OCC {
-    public static ListProductsPayload listProducts(Config config, int offset, OCCToken occToken) throws Exception {
+    public static ListProductsPayload listProducts(
+        String adminHost, String listProductsFields, Integer listProductsLimit,
+        Boolean showInactives, long offset, OCCToken occToken, String appKey
+    ) throws Exception {
         final String url = "https://{occAdminHost}/ccadmin/v1/products";
 
         for (int attempts = 0; attempts < 5; attempts++) {
-            HttpResponse<String> httpResponse = Unirest.get(url)
-                .routeParam("occAdminHost", config.getOccAdminHost())
+            HttpRequest request = Unirest.get(url)
+                .routeParam("occAdminHost", adminHost)
                 .queryString("expand", "true")
-                .queryString("fields", config.getOccListProductsFields())
-                .queryString("limit", config.getOccListProductsLimit())
+                .queryString("fields", listProductsFields)
+                .queryString("limit", listProductsLimit)
                 .queryString("offset", offset)
-                .header("Authorization", "Bearer ".concat(occToken.getToken(config)))
-                .asString();
+                .header("Authorization", "Bearer ".concat(occToken.getToken(adminHost, appKey)));
+            HttpResponse<String> httpResponse = null;
+
+            if (!showInactives) {
+                request.queryString("queryFormat", "SCIM")
+                    .queryString("q", "active eq true AND childSKUs.active eq true");
+            }
+
+            httpResponse = request.asString();
+
 
             if (httpResponse.getStatus() / 100 != 2) {
                 Logger.error(String.format(
@@ -40,63 +55,70 @@ public class OCC {
         throw new Exception("Attempts limit exceeded in OCC.listProducts");
     }
 
-    public static ListProductsPayload getInventory(Config config, String inventoryId, OCCToken occToken) throws Exception {
+    public static Inventory inventoryDetails(
+        String adminHost, String inventoryId, String inventoryLocation, OCCToken occToken, String appKey
+    ) throws Exception {
         final String url = "https://{occAdminHost}/ccadmin/v1/inventories/{inventoryId}";
 
         for (int attempts = 0; attempts < 5; attempts++) {
+            GetRequest request = Unirest.get(url)
+                .routeParam("occAdminHost", adminHost)
+                .routeParam("inventoryId", inventoryId)
+                .header("Authorization", "Bearer ".concat(occToken.getToken(adminHost, appKey)));
+
             HttpResponse<String> httpResponse = null;
 
-            if (config.getOccInventoryLocation() == null) {
-                httpResponse = Unirest.get(url)
-                    .routeParam("occAdminHost", config.getOccAdminHost())
-                    .routeParam("inventoryId", inventoryId)
-                    .queryString("fields", config.getOccListProductsFields())
-                    .header("Authorization", "Bearer ".concat(occToken.getToken(config)))
+            if (inventoryLocation == null) {
+                httpResponse = request.queryString("fields", "stockLevel,availabilityStatusMsg")
                     .asString();
 
 
                 if (httpResponse.getStatus() / 100 != 2) {
                     Logger.error(String.format(
-                        "Error in OCC.listProducts: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
+                        "Error in OCC.inventoryDetails: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
                     ));
                 }
                 else {
                     Gson gson = new Gson();
 
-                    ListProductsPayload listProductsPayload = gson.fromJson(
-                        httpResponse.getBody(), ListProductsPayload.class
+                    InventoryDetailsDefaultPayload inventoryDetailsDefaultPayload = gson.fromJson(
+                        httpResponse.getBody(), InventoryDetailsDefaultPayload.class
                     );
 
-                    return listProductsPayload;
+                    Inventory inventory = new Inventory(
+                        inventoryDetailsDefaultPayload.getStockLevel()
+                    );
+
+                    return inventory;
                 }
             }
             else {
-                httpResponse = Unirest.get(url)
-                    .routeParam("occAdminHost", config.getOccAdminHost())
-                    .routeParam("inventoryId", inventoryId)
-                    .queryString("locationIds", config.getOccInventoryLocation())
-                    .queryString("fields", config.getOccListProductsFields())
-                    .header("Authorization", "Bearer ".concat(occToken.getToken(config)))
+                httpResponse = request.queryString("locationIds", inventoryLocation)
+                    .queryString("fields", "locationInventoryInfo.stockLevel")
                     .asString();
 
 
                 if (httpResponse.getStatus() / 100 != 2) {
                     Logger.error(String.format(
-                        "Error in OCC.listProducts: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
+                        "Error in OCC.inventoryDetails: status %d, payload: %s", httpResponse.getStatus(), httpResponse.getRawBody()
                     ));
                 }
                 else {
                     Gson gson = new Gson();
 
-                    ListProductsPayload listProductsPayload = gson.fromJson(
-                        httpResponse.getBody(), ListProductsPayload.class
+                    InventoryDetailsLocationsPayload inventoryDetailsLocationsPayload = gson.fromJson(
+                        httpResponse.getBody(), InventoryDetailsLocationsPayload.class
                     );
 
-                    return listProductsPayload;
+                    Inventory inventory = new Inventory(
+                        inventoryDetailsLocationsPayload.getLocationInventoryInfo().get(0).getStockLevel()
+                    );
+
+                    return inventory;
                 }
             }
         }
 
-        throw new Exception("Attempts limit exceeded in OCC.listProducts");
+        throw new Exception("Attempts limit exceeded in OCC.inventoryDetails");
     }
 }
