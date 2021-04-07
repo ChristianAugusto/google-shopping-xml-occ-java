@@ -3,8 +3,6 @@ package com.christian.googleshoppingxmloccjava.models.files;
 import com.christian.googleshoppingxmloccjava.utils.Logger;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class XML {
